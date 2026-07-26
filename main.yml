@@ -1,0 +1,39 @@
+name: Baccarat API Server
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+  schedule:
+    - cron: '0 */4 * * *'  # Restart every 4 hours
+
+jobs:
+  run-server:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm install
+    
+    - name: Start server
+      run: |
+        node server.js &
+        SERVER_PID=$!
+        echo "Server started with PID: $SERVER_PID"
+        # Keep alive for 6 hours (GitHub Actions max)
+        sleep 21600
+        kill $SERVER_PID
+      env:
+        USERNAME: ${{ secrets.USERNAME }}
+        PASSWORD: ${{ secrets.PASSWORD }}
+        BASE_URL: ${{ secrets.BASE_URL }}
+        PORT: 5000
